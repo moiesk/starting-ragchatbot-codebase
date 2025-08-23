@@ -634,34 +634,26 @@ details[open] .suggested-header::before {
 /* New Chat Button */
 .new-chat-button {
     width: 100%;
-    padding: 0.75rem 1rem;
-    background: var(--background);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    color: var(--text-primary);
+    padding: 0.5rem 0;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
     font-size: 0.875rem;
+    font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s ease;
-    text-align: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    transition: color 0.2s ease;
+    text-align: left;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .new-chat-button:focus {
     outline: none;
-    box-shadow: 0 0 0 3px var(--focus-ring);
+    color: var(--primary-color);
 }
 
 .new-chat-button:hover {
-    background: var(--surface-hover);
-    border-color: var(--primary-color);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
-}
-
-.new-chat-button:active {
-    transform: translateY(0);
+    color: var(--primary-color);
 }
 
 /* Suggested Questions in Sidebar */
