@@ -272,6 +272,33 @@ header h1 {
     transform: translateY(0);
 }
 
+/* General links in message content */
+.message-content a {
+    color: #60a5fa;
+    text-decoration: underline;
+    text-decoration-color: rgba(96, 165, 250, 0.5);
+    text-underline-offset: 2px;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.message-content a:hover {
+    color: #93c5fd;
+    text-decoration-color: #93c5fd;
+    text-shadow: 0 0 8px rgba(96, 165, 250, 0.4);
+}
+
+.message-content a:visited {
+    color: #c084fc;
+    text-decoration-color: rgba(192, 132, 252, 0.5);
+}
+
+.message-content a:visited:hover {
+    color: #d8b4fe;
+    text-decoration-color: #d8b4fe;
+    text-shadow: 0 0 8px rgba(192, 132, 252, 0.4);
+}
+
 /* Markdown formatting styles */
 .message-content h1,
 .message-content h2,
