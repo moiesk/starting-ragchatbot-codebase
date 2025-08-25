@@ -21,6 +21,17 @@ uv sync
 **Add new dependencies:**
 uv add package_name
 
+**Code Quality Commands:**
+```bash
+# Format code with Black
+./scripts/format.sh
+
+# Check code formatting
+./scripts/check-format.sh
+
+# Run all quality checks (formatting + tests)
+./scripts/quality-check.sh
+```
 
 **Environment setup:**
 Create `.env` file in root with:
