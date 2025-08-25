@@ -320,12 +320,21 @@ class TestAIGeneratorWithMockAPI(unittest.TestCase):
         mock_tool_use.input = {"query": "test"}
         mock_tool_use.id = "tool_123"
 
+        # Mock text response for when tool execution fails
+        mock_text_content = Mock()
+        mock_text_content.text = "This is a fallback response after tool error"
+
         mock_response = Mock()
         mock_response.content = [mock_tool_use]
         mock_response.stop_reason = "tool_use"
 
+        # Mock fallback response without tools (for when tool execution fails)
+        mock_fallback_response = Mock()
+        mock_fallback_response.content = [mock_text_content]
+
         mock_client = Mock()
-        mock_client.messages.create.return_value = mock_response
+        # First call returns tool_use response, second call returns fallback
+        mock_client.messages.create.side_effect = [mock_response, mock_fallback_response]
         mock_anthropic.return_value = mock_client
 
         ai_gen = AIGenerator("test_key", "test_model")

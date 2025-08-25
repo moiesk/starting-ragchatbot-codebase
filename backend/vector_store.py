@@ -113,13 +113,41 @@ class VectorStore:
             return SearchResults.empty(f"Search error: {str(e)}")
 
     def _resolve_course_name(self, course_name: str) -> Optional[str]:
-        """Use vector search to find best matching course by name"""
+        """Use vector search to find best matching course by name with strict validation"""
         try:
-            results = self.course_catalog.query(query_texts=[course_name], n_results=1)
+            # Get multiple results to find better matches
+            results = self.course_catalog.query(query_texts=[course_name], n_results=3)
 
-            if results["documents"][0] and results["metadatas"][0]:
-                # Return the title (which is now the ID)
-                return results["metadatas"][0][0]["title"]
+            if results["documents"][0] and results["metadatas"][0] and results["distances"][0]:
+                course_name_lower = course_name.lower()
+                
+                # Check all results for exact word matches first
+                for i, (distance, metadata) in enumerate(zip(results["distances"][0], results["metadatas"][0])):
+                    matched_title = metadata["title"]
+                    matched_title_lower = matched_title.lower()
+                    
+                    # Check for word-level matches (more precise than just substring)
+                    course_words = course_name_lower.split()
+                    title_words = matched_title_lower.split()
+                    # Accept words of 3+ characters
+                    word_match = any(word in title_words for word in course_words if len(word) >= 3)
+                    
+                    # First check for exact word matches (highest priority)
+                    if word_match:
+                        return matched_title
+                    
+                    # Then check substring matches
+                    if course_name_lower in matched_title_lower:
+                        return matched_title
+                
+                # Finally, check if the top result has very high similarity (for typos, etc.)
+                top_distance = results["distances"][0][0]
+                top_title = results["metadatas"][0][0]["title"]
+                STRICT_SIMILARITY_THRESHOLD = 0.3  # Very strict for non-word matches
+                
+                if top_distance < STRICT_SIMILARITY_THRESHOLD:
+                    return top_title
+                
         except Exception as e:
             print(f"Error resolving course name: {e}")
 
