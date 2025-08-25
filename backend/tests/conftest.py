@@ -11,7 +11,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch, AsyncMock
 
 # Add backend to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from fastapi.testclient import TestClient
 from httpx import AsyncClient
@@ -73,7 +73,7 @@ Handle multiple operations concurrently.
 Lesson 2: Module Systems
 ES6 modules and CommonJS patterns.
 Organize large JavaScript applications.
-"""
+""",
     }
 
 
@@ -82,10 +82,10 @@ def sample_docs_folder(temp_dir, sample_course_content):
     """Create a temporary docs folder with sample course files"""
     docs_path = Path(temp_dir) / "docs"
     docs_path.mkdir()
-    
+
     for filename, content in sample_course_content.items():
         (docs_path / filename).write_text(content)
-    
+
     return str(docs_path)
 
 
@@ -93,33 +93,33 @@ def sample_docs_folder(temp_dir, sample_course_content):
 def mock_anthropic_client():
     """Mock Anthropic API client"""
     mock_client = Mock()
-    
+
     # Mock successful API response
     mock_response = Mock()
-    mock_response.content = [
-        Mock(text="This is a test response from Claude AI")
-    ]
+    mock_response.content = [Mock(text="This is a test response from Claude AI")]
     mock_response.stop_reason = "end_turn"
-    
+
     mock_client.messages.create.return_value = mock_response
-    
+
     return mock_client
 
 
 @pytest.fixture
 def mock_ai_generator(mock_anthropic_client):
     """Mock AI generator with tool support"""
-    with patch('ai_generator.anthropic.Anthropic', return_value=mock_anthropic_client):
+    with patch("ai_generator.anthropic.Anthropic", return_value=mock_anthropic_client):
         ai_gen = AIGenerator(config.ANTHROPIC_MODEL, config.ANTHROPIC_API_KEY)
-        
+
         # Mock the generate method
         async def mock_generate(messages, tools=None):
             if tools:
                 # Mock tool call response
-                return "Based on the search results, here's the answer.", [{"source": "test_source"}]
+                return "Based on the search results, here's the answer.", [
+                    {"source": "test_source"}
+                ]
             else:
                 return "This is a test response.", []
-        
+
         ai_gen.generate = AsyncMock(side_effect=mock_generate)
         return ai_gen
 
@@ -128,29 +128,29 @@ def mock_ai_generator(mock_anthropic_client):
 def mock_vector_store():
     """Mock vector store for testing"""
     mock_vs = Mock(spec=VectorStore)
-    
+
     # Mock successful initialization
     mock_vs.collection_name = "test_collection"
     mock_vs.client = Mock()
     mock_vs.collection = Mock()
-    
+
     # Mock search results
     mock_search_results = [
         {
             "content": "Sample content about Python basics",
             "course_name": "Introduction to Python",
             "lesson_number": 1,
-            "source": "course1.txt"
+            "source": "course1.txt",
         }
     ]
-    
+
     mock_vs.search.return_value = mock_search_results
     mock_vs.add_documents.return_value = True
     mock_vs.get_collection_info.return_value = {
         "total_documents": 10,
-        "total_courses": 2
+        "total_courses": 2,
     }
-    
+
     return mock_vs
 
 
@@ -158,13 +158,13 @@ def mock_vector_store():
 def mock_session_manager():
     """Mock session manager for testing"""
     mock_sm = Mock(spec=SessionManager)
-    
+
     # Mock session operations
     mock_sm.create_session.return_value = "test_session_123"
     mock_sm.get_session_history.return_value = []
     mock_sm.add_to_session.return_value = None
     mock_sm.clear_session.return_value = None
-    
+
     return mock_sm
 
 
@@ -172,27 +172,29 @@ def mock_session_manager():
 def mock_rag_system(mock_ai_generator, mock_vector_store, mock_session_manager):
     """Mock RAG system with all dependencies"""
     mock_rag = Mock(spec=RAGSystem)
-    
+
     # Set up the mocked components
     mock_rag.ai_generator = mock_ai_generator
     mock_rag.vector_store = mock_vector_store
     mock_rag.session_manager = mock_session_manager
-    
+
     # Mock main query method
     async def mock_query(query, session_id):
-        return "Test response from RAG system", [{"source": "test_source", "content": "test content"}]
-    
+        return "Test response from RAG system", [
+            {"source": "test_source", "content": "test content"}
+        ]
+
     mock_rag.query = AsyncMock(side_effect=mock_query)
-    
+
     # Mock analytics method
     mock_rag.get_course_analytics.return_value = {
         "total_courses": 2,
-        "course_titles": ["Introduction to Python", "Advanced JavaScript"]
+        "course_titles": ["Introduction to Python", "Advanced JavaScript"],
     }
-    
+
     # Mock document loading
     mock_rag.add_course_folder.return_value = (2, 5)  # 2 courses, 5 chunks
-    
+
     return mock_rag
 
 
@@ -203,10 +205,10 @@ def test_app():
     from fastapi.middleware.cors import CORSMiddleware
     from pydantic import BaseModel
     from typing import List, Optional, Union, Dict, Any
-    
+
     # Create a minimal test app with just the API endpoints
     app = FastAPI(title="Test RAG API")
-    
+
     # Add CORS
     app.add_middleware(
         CORSMiddleware,
@@ -215,7 +217,7 @@ def test_app():
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    
+
     # Pydantic models (copied from app.py)
     class QueryRequest(BaseModel):
         query: str
@@ -236,35 +238,38 @@ def test_app():
     class ClearSessionResponse(BaseModel):
         success: bool
         message: str
-    
+
     # Mock RAG system for testing
     mock_rag_system = Mock()
     mock_rag_system.session_manager = Mock()
-    
+
     # Create a counter for unique session IDs
     session_counter = 0
+
     def create_unique_session():
         nonlocal session_counter
         session_counter += 1
         return f"test_session_{session_counter}"
-    
+
     mock_rag_system.session_manager.create_session.side_effect = create_unique_session
-    
+
     async def mock_query_func(query, session_id):
         return "Test response", [{"source": "test.txt", "content": "test content"}]
-    
+
     mock_rag_system.query = AsyncMock(side_effect=mock_query_func)
     mock_rag_system.get_course_analytics.return_value = {
         "total_courses": 2,
-        "course_titles": ["Test Course 1", "Test Course 2"]
+        "course_titles": ["Test Course 1", "Test Course 2"],
     }
     mock_rag_system.session_manager.clear_session.return_value = None
-    
+
     # API endpoints
     @app.post("/api/query", response_model=QueryResponse)
     async def query_documents(request: QueryRequest):
         try:
-            session_id = request.session_id or mock_rag_system.session_manager.create_session()
+            session_id = (
+                request.session_id or mock_rag_system.session_manager.create_session()
+            )
             answer, sources = await mock_rag_system.query(request.query, session_id)
             return QueryResponse(answer=answer, sources=sources, session_id=session_id)
         except Exception as e:
@@ -276,7 +281,7 @@ def test_app():
             analytics = mock_rag_system.get_course_analytics()
             return CourseStats(
                 total_courses=analytics["total_courses"],
-                course_titles=analytics["course_titles"]
+                course_titles=analytics["course_titles"],
             )
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
@@ -287,15 +292,15 @@ def test_app():
             mock_rag_system.session_manager.clear_session(request.session_id)
             return ClearSessionResponse(
                 success=True,
-                message=f"Session {request.session_id} cleared successfully"
+                message=f"Session {request.session_id} cleared successfully",
             )
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
-    
+
     @app.get("/")
     async def read_root():
         return {"message": "RAG Chatbot API is running"}
-    
+
     return app
 
 
@@ -305,26 +310,14 @@ def test_client(test_app):
     return TestClient(test_app)
 
 
-
-
 @pytest.fixture
 def api_test_data():
     """Test data for API endpoint tests"""
     return {
-        "valid_query": {
-            "query": "What is Python?",
-            "session_id": "test_session_123"
-        },
-        "query_without_session": {
-            "query": "How do Python functions work?"
-        },
-        "invalid_query": {
-            "query": "",  # Empty query
-            "session_id": "test_session"
-        },
-        "clear_session_request": {
-            "session_id": "test_session_123"
-        }
+        "valid_query": {"query": "What is Python?", "session_id": "test_session_123"},
+        "query_without_session": {"query": "How do Python functions work?"},
+        "invalid_query": {"query": "", "session_id": "test_session"},  # Empty query
+        "clear_session_request": {"session_id": "test_session_123"},
     }
 
 
@@ -334,9 +327,9 @@ def setup_test_environment():
     # Ensure test environment variables are set
     os.environ.setdefault("ANTHROPIC_API_KEY", "test_api_key")
     os.environ.setdefault("ENVIRONMENT", "test")
-    
+
     yield
-    
+
     # Clean up after tests
     pass
 
